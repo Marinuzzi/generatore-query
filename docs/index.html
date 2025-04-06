@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Generatore Query ElasticSearch</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; }
+    textarea, input, select { width: 100%; margin-bottom: 10px; }
+    .box { max-width: 600px; margin: auto; }
+    pre { background: #f4f4f4; padding: 15px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Generatore Query ElasticSearch</h2>
+
+    <label>Parole chiave:</label>
+    <input type="text" id="parole_chiave" placeholder="es. gatto nero">
+
+    <label>Campi da cercare (separati da virgole):</label>
+    <input type="text" id="campi" placeholder="es. nome,colore">
+
+    <label>Campo numerico (opzionale):</label>
+    <input type="text" id="campo_num">
+
+    <label>Range minimo (opzionale):</label>
+    <input type="number" id="min_val">
+
+    <label>Range massimo (opzionale):</label>
+    <input type="number" id="max_val">
+
+    <label>Campo per ordinamento (opzionale):</label>
+    <input type="text" id="campo_sort">
+
+    <label>Ordine:</label>
+    <select id="ordine">
+      <option value="desc">Discendente</option>
+      <option value="asc">Ascendente</option>
+    </select>
+
+    <button onclick="generaQuery()">Genera Query</button>
+
+    <h3>Risultato:</h3>
+    <pre id="risultato"></pre>
+  </div>
+
+  <script>
+    function generaQuery() {
+      const parole_chiave = document.getElementById("parole_chiave").value;
+      const campi = document.getElementById("campi").value.split(",").map(c => c.trim());
+      const campo_num = document.getElementById("campo_num").value;
+      const min_val = document.getElementById("min_val").value;
+      const max_val = document.getElementById("max_val").value;
+      const campo_sort = document.getElementById("campo_sort").value;
+      const ordine = document.getElementById("ordine").value;
+
+      let query = {
+        query: {
+          bool: {
+            must: [
+              {
+                multi_match: {
+                  query: parole_chiave,
+                  fields: campi
+                }
+              }
+            ],
+            filter: []
+          }
+        },
+        sort: []
+      };
+
+      if (campo_num && min_val && max_val) {
+        query.query.bool.filter.push({
+          range: {
+            [campo_num]: {
+              gte: Number(min_val),
+              lte: Number(max_val)
+            }
+          }
+        });
+      }
+
+      if (campo_sort) {
+        query.sort.push({
+          [campo_sort]: { order: ordine }
+        });
+      }
+
+      document.getElementById("risultato").textContent = JSON.stringify(query, null, 2);
+    }
+  </script>
+</body>
+</html>
